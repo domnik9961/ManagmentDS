@@ -147,26 +147,33 @@ namespace ManagmentDS
                 {
                     CommandTimeout = 60
                 };
-                using SqlDataReader r = cmd.ExecuteReader();
-
                 var selectStatements = SqlBatchSplitter.SplitSelects(txtSqlEditor.Text);
+                var results = new List<(DataTable Table, string Select, int Index)>();
 
-                int idx = 1;
-                while (r.HasRows)
+                using (SqlDataReader r = cmd.ExecuteReader())
                 {
-                    DataTable dt = ReadResultSet(r);
-                    AddResultTab(dt, idx);
+                    int idx = 1;
+                    while (r.HasRows)
+                    {
+                        DataTable dt = ReadResultSet(r);
+                        AddResultTab(dt, idx);
 
-                    string select = idx - 1 < selectStatements.Count
-                        ? selectStatements[idx - 1]
-                        : string.Empty;
+                        string select = idx - 1 < selectStatements.Count
+                            ? selectStatements[idx - 1]
+                            : string.Empty;
 
-                    string script = GenerateScriptForResult(conn, select, dt, idx);
+                        results.Add((dt, select, idx));
+
+                        idx++;
+                        r.NextResult();
+                    }
+                }
+
+                foreach (var result in results)
+                {
+                    string script = GenerateScriptForResult(conn, result.Select, result.Table, result.Index);
                     if (!string.IsNullOrWhiteSpace(script))
                         txtGeneratedScript.AppendText(script);
-
-                    idx++;
-                    r.NextResult();
                 }
 
                 AddMessagesTab();
