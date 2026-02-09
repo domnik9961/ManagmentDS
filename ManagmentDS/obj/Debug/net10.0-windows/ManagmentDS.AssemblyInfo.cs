@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ManagmentDS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d31a0e7afee1d4e4d1255ec0a8cb8e05bb5cc42b")]
 [assembly: System.Reflection.AssemblyProductAttribute("ManagmentDS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ManagmentDS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -32,3 +32,14 @@ C:\Users\ddsoc\source\repos\domnik9961\ManagmentDS\ManagmentDS\bin\Debug\net10.0
 C:\Users\ddsoc\source\repos\domnik9961\ManagmentDS\ManagmentDS\bin\Debug\net10.0-windows\Microsoft.Extensions.FileProviders.Physical.dll
 C:\Users\ddsoc\source\repos\domnik9961\ManagmentDS\ManagmentDS\bin\Debug\net10.0-windows\Microsoft.Extensions.FileSystemGlobbing.dll
 C:\Users\ddsoc\source\repos\domnik9961\ManagmentDS\ManagmentDS\bin\Debug\net10.0-windows\Microsoft.Extensions.Primitives.dll
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.csproj.AssemblyReference.cache
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.Form1.resources
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.csproj.GenerateResource.cache
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.AssemblyInfoInputs.cache
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.AssemblyInfo.cs
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.csproj.CoreCompileInputs.cache
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.sourcelink.json
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.dll
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\refint\ManagmentDS.dll
+C:\Users\ddsoc\Documents\GitHub\ManagmentDS\ManagmentDS\obj\Debug\net10.0-windows\ManagmentDS.pdb

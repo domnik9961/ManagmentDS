@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ddsoc\\source\\repos\\domnik9961\\ManagmentDS\\ManagmentDS\\ManagmentDS.csproj": {}
+    "C:\\Users\\ddsoc\\Documents\\GitHub\\ManagmentDS\\ManagmentDS\\ManagmentDS.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ddsoc\\source\\repos\\domnik9961\\ManagmentDS\\ManagmentDS\\ManagmentDS.csproj": {
+    "C:\\Users\\ddsoc\\Documents\\GitHub\\ManagmentDS\\ManagmentDS\\ManagmentDS.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ddsoc\\source\\repos\\domnik9961\\ManagmentDS\\ManagmentDS\\ManagmentDS.csproj",
+        "projectUniqueName": "C:\\Users\\ddsoc\\Documents\\GitHub\\ManagmentDS\\ManagmentDS\\ManagmentDS.csproj",
         "projectName": "ManagmentDS",
-        "projectPath": "C:\\Users\\ddsoc\\source\\repos\\domnik9961\\ManagmentDS\\ManagmentDS\\ManagmentDS.csproj",
+        "projectPath": "C:\\Users\\ddsoc\\Documents\\GitHub\\ManagmentDS\\ManagmentDS\\ManagmentDS.csproj",
         "packagesPath": "C:\\Users\\ddsoc\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ddsoc\\source\\repos\\domnik9961\\ManagmentDS\\ManagmentDS\\obj\\",
+        "outputPath": "C:\\Users\\ddsoc\\Documents\\GitHub\\ManagmentDS\\ManagmentDS\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
