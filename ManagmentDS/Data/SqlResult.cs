@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-namespace ManagmentDS.WinForms.Data
+namespace ManagmentDS.Data
 {
     public class SqlResult
     {
