@@ -23,6 +23,7 @@ namespace ManagmentDS
         private SqlSyntaxHighlighterV2 _scriptHighlighter;
 
         private readonly List<string> _sqlMessages = new();
+        private readonly List<DbObjectInfo> _dbObjectCache = new();
 
         private const int HOTKEY_ID = 1;
         private const uint MOD_WIN = 0x0008;
@@ -134,18 +135,51 @@ namespace ManagmentDS
             txtGeneratedScript.Clear();
             _sqlMessages.Clear();
 
-            using SqlConnection conn = new(GetDbConnectionString());
-            conn.Open();
-
-            using SqlCommand cmd = new(txtSqlEditor.Text, conn);
-            using SqlDataReader r = cmd.ExecuteReader();
-
-            int idx = 1;
-            while (r.HasRows)
+            UpdateStatus("Executing SQL...");
+            try
             {
-                DataTable dt = ReadResultSet(r);
-                AddResultTab(dt, idx++);
-                r.NextResult();
+                using SqlConnection conn = new(GetDbConnectionString());
+                conn.Open();
+
+                using SqlCommand cmd = new(txtSqlEditor.Text, conn)
+                {
+                    CommandTimeout = 60
+                };
+                using SqlDataReader r = cmd.ExecuteReader();
+
+                var selectStatements = SqlBatchSplitter.SplitSelects(txtSqlEditor.Text);
+
+                int idx = 1;
+                while (r.HasRows)
+                {
+                    DataTable dt = ReadResultSet(r);
+                    AddResultTab(dt, idx);
+
+                    string select = idx - 1 < selectStatements.Count
+                        ? selectStatements[idx - 1]
+                        : string.Empty;
+
+                    string script = GenerateScriptForResult(conn, select, dt, idx);
+                    if (!string.IsNullOrWhiteSpace(script))
+                        txtGeneratedScript.AppendText(script);
+
+                    idx++;
+                    r.NextResult();
+                }
+
+                UpdateStatus("SQL executed successfully.");
+            }
+            catch (SqlException ex)
+            {
+                HandleException("SQL execution failed.", ex);
+            }
+            catch (InvalidOperationException ex)
+            {
+                HandleException("SQL execution failed due to invalid state.", ex);
+            }
+            catch (Exception ex)
+            {
+                HandleException("Unexpected error during SQL execution.", ex);
             }
         }
 
@@ -188,16 +222,29 @@ namespace ManagmentDS
 
         private void btnConnectionSQL_Click(object sender, EventArgs e)
         {
-            using SqlConnection conn =
-                new($"Server={txtSQLServer.Text};Database=master;Trusted_Connection=True;");
-            conn.Open();
+            UpdateStatus("Connecting to SQL Server...");
+            try
+            {
+                using SqlConnection conn =
+                    new($"Server={txtSQLServer.Text};Database=master;Trusted_Connection=True;");
+                conn.Open();
 
-            DataTable dt = new();
-            new SqlDataAdapter("SELECT name FROM sys.databases", conn).Fill(dt);
+                DataTable dt = new();
+                new SqlDataAdapter("SELECT name FROM sys.databases", conn).Fill(dt);
 
-            cBoxDatabaseList.DataSource = dt;
-            cBoxDatabaseList.DisplayMember = "name";
-            cBoxDatabaseList.ValueMember = "name";
+                cBoxDatabaseList.DataSource = dt;
+                cBoxDatabaseList.DisplayMember = "name";
+                cBoxDatabaseList.ValueMember = "name";
+                UpdateStatus("Connection successful.");
+            }
+            catch (SqlException ex)
+            {
+                HandleException("SQL connection failed.", ex);
+            }
+            catch (Exception ex)
+            {
+                HandleException("Unexpected error while connecting.", ex);
+            }
         }
 
         private void cBoxDatabaseList_SelectedIndexChanged(object sender, EventArgs e)
@@ -211,14 +258,178 @@ namespace ManagmentDS
 
         private void LoadDatabaseObjects()
         {
-            treeDbObjects.Nodes.Clear();
-            treeDbObjects.Nodes.Add("Tables");
+            UpdateStatus("Loading database objects...");
+            _dbObjectCache.Clear();
+            try
+            {
+                using SqlConnection conn = new(GetDbConnectionString());
+                conn.Open();
+
+                string sql = @"
+SELECT s.name AS SchemaName, o.name, o.type
+FROM sys.objects o
+JOIN sys.schemas s ON o.schema_id = s.schema_id
+WHERE o.type IN ('U','V','P')
+ORDER BY s.name, o.name";
+
+                using SqlCommand cmd = new(sql, conn);
+                using SqlDataReader r = cmd.ExecuteReader();
+
+                while (r.Read())
+                {
+                    _dbObjectCache.Add(new DbObjectInfo
+                    {
+                        Schema = r.GetString(0),
+                        Name = r.GetString(1),
+                        Type = r.GetString(2)
+                    });
+                }
+
+                UpdateAutoCompleteObjects();
+                BuildObjectTree(txtFindObjSQL.Text);
+                UpdateStatus("Database objects loaded.");
+            }
+            catch (SqlException ex)
+            {
+                HandleException("Failed to load database objects.", ex);
+            }
+            catch (Exception ex)
+            {
+                HandleException("Unexpected error while loading objects.", ex);
+            }
         }
 
         private void treeDbObjects_BeforeExpand(object sender, TreeViewCancelEventArgs e) { }
 
-        private void txtFindObjSQL_TextChanged(object sender, EventArgs e) { }
+        private void txtFindObjSQL_TextChanged(object sender, EventArgs e)
+        {
+            BuildObjectTree(txtFindObjSQL.Text);
+        }
 
-        private void panelLineNumbers_Paint(object sender, PaintEventArgs e) { }
+        private void panelLineNumbers_Paint(object sender, PaintEventArgs e)
+        {
+            e.Graphics.Clear(SystemColors.Control);
+            int firstLine = txtSqlEditor.GetLineFromCharIndex(
+                txtSqlEditor.GetCharIndexFromPosition(new Point(0, 0)));
+            int lastLine = txtSqlEditor.GetLineFromCharIndex(
+                txtSqlEditor.GetCharIndexFromPosition(new Point(0, txtSqlEditor.Height)));
+
+            using var brush = new SolidBrush(Color.DimGray);
+            using var font = new Font("Consolas", 9F);
+
+            for (int i = firstLine; i <= lastLine + 1; i++)
+            {
+                int charIndex = txtSqlEditor.GetFirstCharIndexFromLine(i);
+                if (charIndex < 0) continue;
+
+                Point pos = txtSqlEditor.GetPositionFromCharIndex(charIndex);
+                e.Graphics.DrawString(
+                    (i + 1).ToString(),
+                    font,
+                    brush,
+                    new PointF(5, pos.Y));
+            }
+        }
+
+        private void BuildObjectTree(string filter)
+        {
+            treeDbObjects.BeginUpdate();
+            treeDbObjects.Nodes.Clear();
+
+            string match = filter?.Trim() ?? string.Empty;
+
+            var groups = _dbObjectCache
+                .Where(o =>
+                    string.IsNullOrWhiteSpace(match) ||
+                    o.Name.Contains(match, StringComparison.OrdinalIgnoreCase) ||
+                    o.Schema.Contains(match, StringComparison.OrdinalIgnoreCase))
+                .GroupBy(o => o.Type)
+                .OrderBy(g => g.Key);
+
+            foreach (var g in groups)
+            {
+                string header = g.Key switch
+                {
+                    "U" => "Tables",
+                    "V" => "Views",
+                    "P" => "Procedures",
+                    _ => "Objects"
+                };
+
+                TreeNode parent = new(header);
+                foreach (var obj in g)
+                {
+                    parent.Nodes.Add($"{obj.Schema}.{obj.Name}");
+                }
+
+                treeDbObjects.Nodes.Add(parent);
+            }
+
+            treeDbObjects.EndUpdate();
+        }
+
+        private void UpdateAutoCompleteObjects()
+        {
+            var objects = _dbObjectCache
+                .Where(o => o.Type is "U" or "V")
+                .Select(o => $"{o.Schema}.{o.Name}")
+                .ToList();
+
+            _autoComplete.UpdateDatabaseObjects(objects);
+        }
+
+        private string GenerateScriptForResult(
+            SqlConnection conn,
+            string sql,
+            DataTable data,
+            int idx)
+        {
+            if (string.IsNullOrWhiteSpace(sql))
+                return string.Empty;
+
+            SelectAnalysis analysis = SelectAnalyzer.Analyze(sql);
+            if (!analysis.HasFrom || string.IsNullOrWhiteSpace(analysis.Schema))
+                return string.Empty;
+
+            List<ColumnSchema> columns = TableSchemaLoader.Load(
+                conn,
+                analysis.Schema,
+                analysis.Table,
+                analysis.IsSelectStar ? null : analysis.Columns);
+
+            if (columns.Count == 0)
+                return string.Empty;
+
+            HashSet<string> allowedColumns = new(
+                columns.Select(c => c.Name),
+                StringComparer.OrdinalIgnoreCase);
+
+            List<string> indexScripts = IndexScriptGenerator.Generate(
+                conn,
+                analysis.Schema,
+                analysis.Table,
+                allowedColumns);
+
+            return ResultScriptGenerator.Generate(idx, columns, indexScripts, data);
+        }
+
+        private void HandleException(string message, Exception ex)
+        {
+            _sqlMessages.Add($"{message} {ex.Message}");
+            UpdateStatus(message);
+            MessageBox.Show($"{message}\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void UpdateStatus(string message)
+        {
+            toolStripStatusLabel1.Text = message;
+        }
+
+        private sealed class DbObjectInfo
+        {
+            public string Schema { get; set; }
+            public string Name { get; set; }
+            public string Type { get; set; }
+        }
     }
 }
